@@ -31,7 +31,7 @@ class Rope {
 			if (input.length() > 3) {
 				int halfWay = input.length() / 2;
 				string leftString = input.substr(0, halfWay);
-				string rightString = input.substr(halfWay , input.length());
+				string rightString = input.substr(halfWay, input.length());
 				weight = leftString.length();
 				left = new Node(leftString, this);
 				right = new Node(rightString, this);
@@ -73,9 +73,10 @@ public:
 	char index(const unsigned int) const; //visszaadja a kapott indexű karaktert.
 	char helpForIndex(Node* actualNode, unsigned int) const; //segédfüggvény az indexhez.
 	void ropeLength(Node* actualNode, unsigned int &totalWeight); //visszaadja az adott rope hosszát
-	unsigned int helpRopeLength (Node* actualNode); //segédfüggvény a ropeLengthez
+	unsigned int helpRopeLength(Node* actualNode); //segédfüggvény a ropeLengthez
 	static Rope concat(Rope& r1, Rope& r2); // konkatál két ropeot.
-	static pair<Rope, Rope> split(Rope&, const unsigned int); // Ropeot kettévág.
+	static pair<Rope, Rope> split(Rope& motherRope, const unsigned int index); // Ropeot kettévág.
+	Node* getNode(Node* actualNode, const unsigned int index); // segédfüggvény a splithez, visszaadja a nodeot
 	string report(unsigned int from, unsigned int till) const; //Visszaadja a két index közötti stringet
 	Rope() :
 			root(nullptr), lengthOfRope(0) {
@@ -86,8 +87,9 @@ public:
 		lengthOfRope = input.length();
 		root = new Node(input);
 	}
-	Rope(Node* rootNode) : root(rootNode), lengthOfRope(0){
-		ropeLength(rootNode,lengthOfRope);
+	Rope(Node* rootNode) :
+			root(rootNode), lengthOfRope(0) {
+		ropeLength(rootNode, lengthOfRope);
 	}
 	~Rope() {
 		Rope::_remove(root);
@@ -126,15 +128,15 @@ char Rope::index(const unsigned int indexOfChar) const {
 }
 string Rope::report(unsigned int from, unsigned int till) const {
 	string resultText;
-	for(unsigned int i= from; i<till; i++){
+	for (unsigned int i = from; i < till; i++) {
 		resultText += index(i);
 	}
 	return resultText;
 }
 
-Rope Rope::concat(Rope& r1, Rope& r2){
-	string textOfr1 = r1.report(0,r1.length());
-	string textOfr2 = r2.report(0,r2.length());
+Rope Rope::concat(Rope& r1, Rope& r2) {
+	string textOfr1 = r1.report(0, r1.length());
+	string textOfr2 = r2.report(0, r2.length());
 	Node* newRootLeftChild = new Node(textOfr1);
 	Node* newRootRightChild = new Node(textOfr2);
 	r1.~Rope();
@@ -147,12 +149,39 @@ Rope Rope::concat(Rope& r1, Rope& r2){
 	Rope* concatedRope = new Rope(freshRoot);
 	return *concatedRope;
 }
-//végigmegy a fa jobb oldalán és összeadja a weighteket, referencia szerint visszaadja a lengthOfRopeot
-void Rope::ropeLength(Node* actualNode, unsigned int &totalWeight){
-	if(actualNode != nullptr){
+//vegigiteral a fa jobb agan es visszaadja az osszsulyt, vagyis a hosszt
+void Rope::ropeLength(Node* actualNode, unsigned int &totalWeight) {
+	if (actualNode != nullptr) {
 		totalWeight += actualNode->weight;
 		ropeLength(actualNode->right, totalWeight);
 	}
+}
+//origin:
+//https://kukuruku.co/post/ropes-fast-strings/
+//started doing by the proper way
+//hasonloan a helpofindexhez
+/*Rope::Node* Rope::getNode(Node* actualNode, const unsigned int indexOfSplit){
+	if (actualNode->weight <= indexOfSplit) {
+		return getNode(actualNode->right, indexOfSplit - actualNode->weight);
+	}
+	if (actualNode->left != nullptr) {
+		return getNode(actualNode->left, indexOfSplit);
+	}
+	return actualNode;
+
+}*/
+
+pair<Rope, Rope> Rope::split(Rope& motherRope, const unsigned int index) {
+	pair<Rope,Rope> childrenOfMotherRope;
+	string firstHalf = motherRope.report(0,index);
+	string secondHalf = motherRope.report(index,motherRope.length());
+	Rope* firstChild = new Rope(firstHalf);
+	Rope* secondChild = new Rope(secondHalf);
+	childrenOfMotherRope.first = firstChild;
+	childrenOfMotherRope.second = secondChild;
+	motherRope.~Rope();
+	return childrenOfMotherRope;
+
 }
 
 #endif /* ROPE_HPP_ */
