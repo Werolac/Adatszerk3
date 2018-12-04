@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     CHECK_EQ("The quick brown fox jumps over the lazy dog.", rope.report(0, 44));
   }
 
- /* TEST("Create two trees and check concat and split lengths.", 10) {
+  TEST("Create two trees and check concat and split lengths.", 10) {
     Rope r1("I would like ");
     Rope r2("to concatenate two ropes.");
 
@@ -103,7 +103,8 @@ int main(int argc, char *argv[]) {
     CHECK_EQ(38, r3.length());
     CHECK_EQ(0, r1.length());
     CHECK_EQ(0, r2.length());
-
+  }
+/*
     std::pair<Rope, Rope> splitted = Rope::split(r3, 13);
     CHECK_EQ(0, r3.length());
     CHECK_EQ(13, splitted.first.length());

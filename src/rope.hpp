@@ -72,6 +72,8 @@ public:
 	unsigned int length() const; // visszaadja a rope súlyát(szummázva az összes csúcs súlyát)
 	char index(const unsigned int) const; //visszaadja a kapott indexű karaktert.
 	char helpForIndex(Node* actualNode, unsigned int) const; //segédfüggvény az indexhez.
+	void ropeLength(Node* actualNode, unsigned int &totalWeight); //visszaadja az adott rope hosszát
+	unsigned int helpRopeLength (Node* actualNode); //segédfüggvény a ropeLengthez
 	static Rope concat(Rope& r1, Rope& r2); // konkatál két ropeot.
 	static pair<Rope, Rope> split(Rope&, const unsigned int); // Ropeot kettévág.
 	string report(unsigned int from, unsigned int till) const; //Visszaadja a két index közötti stringet
@@ -84,11 +86,15 @@ public:
 		lengthOfRope = input.length();
 		root = new Node(input);
 	}
+	Rope(Node* rootNode) : root(rootNode), lengthOfRope(0){
+		ropeLength(rootNode,lengthOfRope);
+	}
 	~Rope() {
-		_remove(root);
+		Rope::_remove(root);
+		lengthOfRope = 0;
 	}
 };
-//Destruktor meghívva a gyökérre, bináris fa kódból átemelve
+//Bináris fából átemelve, rekurzívan takaritja a nodeokat ki
 void Rope::_remove(Node *a) {
 	if (a != nullptr) {
 		_remove(a->left);
@@ -124,6 +130,29 @@ string Rope::report(unsigned int from, unsigned int till) const {
 		resultText += index(i);
 	}
 	return resultText;
+}
+
+Rope Rope::concat(Rope& r1, Rope& r2){
+	string textOfr1 = r1.report(0,r1.length());
+	string textOfr2 = r2.report(0,r2.length());
+	Node* newRootLeftChild = new Node(textOfr1);
+	Node* newRootRightChild = new Node(textOfr2);
+	r1.~Rope();
+	r2.~Rope();
+	Node* freshRoot = new Node();
+	freshRoot->left = newRootLeftChild;
+	freshRoot->right = newRootRightChild;
+	freshRoot->left->parent = freshRoot->right->parent = freshRoot;
+	freshRoot->weight = textOfr1.length();
+	Rope* concatedRope = new Rope(freshRoot);
+	return *concatedRope;
+}
+//végigmegy a fa jobb oldalán és összeadja a weighteket, referencia szerint visszaadja a lengthOfRopeot
+void Rope::ropeLength(Node* actualNode, unsigned int &totalWeight){
+	if(actualNode != nullptr){
+		totalWeight += actualNode->weight;
+		ropeLength(actualNode->right, totalWeight);
+	}
 }
 
 #endif /* ROPE_HPP_ */
