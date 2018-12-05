@@ -103,6 +103,7 @@ int main(int argc, char *argv[]) {
     CHECK_EQ(38, r3.length());
     CHECK_EQ(0, r1.length());
     CHECK_EQ(0, r2.length());
+    CHECK_EQ("I would like to concatenate two ropes.", r3.report(0,r3.length()));
   }
 /*
     std::pair<Rope, Rope> splitted = Rope::split(r3, 13);

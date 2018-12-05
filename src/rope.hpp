@@ -68,16 +68,22 @@ class Rope {
 	unsigned int lengthOfRope;
 
 public:
+	//kotelezo fuggvenyek
 	void _remove(Node *a);
 	unsigned int length() const; // visszaadja a rope súlyát(szummázva az összes csúcs súlyát)
 	char index(const unsigned int) const; //visszaadja a kapott indexű karaktert.
-	char helpForIndex(Node* actualNode, unsigned int) const; //segédfüggvény az indexhez.
 	void ropeLength(Node* actualNode, unsigned int &totalWeight); //visszaadja az adott rope hosszát
-	unsigned int helpRopeLength(Node* actualNode); //segédfüggvény a ropeLengthez
 	static Rope concat(Rope& r1, Rope& r2); // konkatál két ropeot.
 	static pair<Rope, Rope> split(Rope& motherRope, const unsigned int index); // Ropeot kettévág.
-	Node* getNode(Node* actualNode, const unsigned int index); // segédfüggvény a splithez, visszaadja a nodeot
 	string report(unsigned int from, unsigned int till) const; //Visszaadja a két index közötti stringet
+	//segedfuggvenyek
+
+	char helpForIndex(Node* actualNode, unsigned int) const; //segédfüggvény az indexhez.
+	unsigned int helpRopeLength(Node* actualNode); //segédfüggvény a ropeLengthez
+	Node* getNode(Node* actualNode, unsigned int &index); // segédfüggvény a splithez, visszaadja a nodeot
+	void beforesplitNode(Node* actualNode, unsigned int index);	//splithez, splitet kesziti elo végzi
+	void splitter(Rope &initialRope,Node* actualNode);
+
 	Rope() :
 			root(nullptr), lengthOfRope(0) {
 	}
@@ -156,32 +162,84 @@ void Rope::ropeLength(Node* actualNode, unsigned int &totalWeight) {
 		ropeLength(actualNode->right, totalWeight);
 	}
 }
-//origin:
-//https://kukuruku.co/post/ropes-fast-strings/
+
 //started doing by the proper way
-//hasonloan a helpofindexhez
-/*Rope::Node* Rope::getNode(Node* actualNode, const unsigned int indexOfSplit){
+//like helpofindex
+Rope::Node* Rope::getNode(Node* actualNode, unsigned int &indexOfSplit){
 	if (actualNode->weight <= indexOfSplit) {
-		return getNode(actualNode->right, indexOfSplit - actualNode->weight);
-	}
-	if (actualNode->left != nullptr) {
-		return getNode(actualNode->left, indexOfSplit);
-	}
-	return actualNode;
+		indexOfSplit -= actualNode->weight;
+			return getNode(actualNode->right, indexOfSplit);
+		}
+		if (actualNode->left != nullptr) {
+			return getNode(actualNode->left, indexOfSplit);
+		}
+		return actualNode;
+}
 
-}*/
+void Rope::splitter(Rope &initialRope,Node* actualNode){
+	if(actualNode->parent->right != nullptr && actualNode->parent->right != actualNode){
+		if(actualNode->parent->parent != nullptr){
+			actualNode->parent->parent->weight -= actualNode->parent->right->weight;
+		}
+		actualNode->parent->right->parent = nullptr;
+		Rope* newRopeFromLeaf = new Rope(actualNode->parent->right);
+		actualNode->parent->right = nullptr;
+		Rope newRopeToPass = concat(initialRope, *newRopeFromLeaf);
+		splitter(newRopeToPass, actualNode->parent);
+	}
+}
 
-pair<Rope, Rope> Rope::split(Rope& motherRope, const unsigned int index) {
-	pair<Rope,Rope> childrenOfMotherRope;
-	string firstHalf = motherRope.report(0,index);
-	string secondHalf = motherRope.report(index,motherRope.length());
-	Rope* firstChild = new Rope(firstHalf);
-	Rope* secondChild = new Rope(secondHalf);
-	childrenOfMotherRope.first = firstChild;
-	childrenOfMotherRope.second = secondChild;
-	motherRope.~Rope();
-	return childrenOfMotherRope;
+void Rope::beforesplitNode(Node* actualNode, unsigned int indexOfSplit) {
+	unsigned int initialIndex = indexOfSplit - 1;
+	//indexOfSplit vary, because of getNode function always changes it
+	Node* searchedNode = getNode(actualNode, indexOfSplit);
+		//we got the node, now we check if the index is before, at , or after the string
+		//if the index is before and after
+		if(indexOfSplit == 0 || indexOfSplit == searchedNode->weight){
+			if(indexOfSplit == 0){
+				//this means that if the index is at a start of a string than search for the previous leaf and make that the current node.
+				actualNode = getNode(root,initialIndex);
+			} else {
+
+			}
+		} else {
+			// we need to split the index
+			string firstHalf, secondHalf;
+			for(unsigned int i=0; i<searchedNode->weight ; i++){
+				if(i<indexOfSplit){
+					firstHalf += searchedNode->charArray[i];
+					searchedNode->charArray[i] = '0';
+				} else {
+					secondHalf += searchedNode->charArray[i];
+					searchedNode->charArray[i] = '0';
+				}
+			}
+			Node* leftChild = new Node(firstHalf,searchedNode);
+			Node* rightChild = new Node(secondHalf,searchedNode);
+			searchedNode->isLeaf = false;
+			searchedNode->left = leftChild;
+			searchedNode->right = rightChild;
+			searchedNode->weight = firstHalf.length();
+		}
 
 }
 
+pair<Rope, Rope> Rope::split(Rope& motherRope, const unsigned int index) {
+	pair<Rope, Rope> childrenOfMotherRope;
+	motherRope.beforesplitNode(motherRope.root,index);
+	return childrenOfMotherRope;
+}
+
+/*
+ pair<Rope, Rope> Rope::split(Rope& motherRope, const unsigned int index) {
+ pair<Rope,Rope> childrenOfMotherRope;
+ string firstHalf = motherRope.report(0,index);
+ string secondHalf = motherRope.report(index,motherRope.length());
+ childrenOfMotherRope.first = new Rope(firstHalf);
+ childrenOfMotherRope.second = new Rope(secondHalf);
+ motherRope.~Rope();
+ return childrenOfMotherRope;
+
+ }
+ */
 #endif /* ROPE_HPP_ */
